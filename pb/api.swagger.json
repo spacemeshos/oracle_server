@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "api.proto",
+    "title": "pb/api.proto",
     "version": "version not set"
   },
   "schemes": [
@@ -160,7 +160,7 @@
           "format": "uint64"
         },
         "InstanceID": {
-          "type": "string",
+          "type": "integer",
           "format": "int64"
         },
         "CommitteeSize": {

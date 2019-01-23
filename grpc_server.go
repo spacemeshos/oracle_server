@@ -53,9 +53,8 @@ func (s Server) ValidateMap(ctx context.Context, in *pb.ValidReq) (*pb.ValidList
 	log.Println("Got validate req")
 	fmt.Println("inst : ", in.InstanceID)
 	fmt.Println("committee ", in.CommitteeSize)
-	fmt.Println("proof ", in.ID)
 
-	v := s.wSwitch.Get(in.World).ValidateMap(in.InstanceID, int(in.CommitteeSize), in.ID)
+	v := s.wSwitch.Get(in.World).ValidateMap(in.InstanceID, int(in.CommitteeSize))
 
 	return v, nil
 }

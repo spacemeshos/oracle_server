@@ -14,7 +14,7 @@ message Registration {
 
 message ValidReq {
     uint64 World = 1;
-    int64 InstanceID = 2;
+    uint32 InstanceID = 2;
     int32 CommitteeSize = 3;
     string ID = 4;
 }

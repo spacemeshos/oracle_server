@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"oracle_server/pb"
 	"sync"
+	"time"
 )
 
 type WorldSwitch struct {
@@ -42,11 +43,11 @@ type RolacleSwitch struct {
 	kill func()
 
 	instLock  sync.Mutex
-	instances map[int64]map[string]struct{}
+	instances map[uint32]map[string]struct{}
 }
 
 func NewRolacleSwitch() *RolacleSwitch {
-	return &RolacleSwitch{clients: make(map[string]struct{}), instances: make(map[int64]map[string]struct{})}
+	return &RolacleSwitch{clients: make(map[string]struct{}), instances: make(map[uint32]map[string]struct{})}
 }
 
 func (rc *RolacleSwitch) Register(pubkey string) {
@@ -70,7 +71,7 @@ func (rc *RolacleSwitch) Unregister(pubkey string) {
 	}
 }
 
-func (rc *RolacleSwitch) Validate(instanceID int64, committeeSize int, proof string) bool {
+func (rc *RolacleSwitch) Validate(instanceID uint32, committeeSize int, proof string) bool {
 	rc.instLock.Lock()
 	rolacle, ok := rc.instances[instanceID]
 	if !ok {
@@ -84,7 +85,7 @@ func (rc *RolacleSwitch) Validate(instanceID int64, committeeSize int, proof str
 	return valid
 }
 
-func (rc *RolacleSwitch) ValidateMap(instanceID int64, committeeSize int, proof string) *pb.ValidList {
+func (rc *RolacleSwitch) ValidateMap(instanceID uint32, committeeSize int) *pb.ValidList {
 	rc.instLock.Lock()
 	rolacle, ok := rc.instances[instanceID]
 	if ok {
@@ -106,7 +107,7 @@ func MapToList(elgmap map[string]struct{}) *pb.ValidList {
 }
 
 // USE ONLY FROM `Validate`
-func (rc *RolacleSwitch) createEligibilityMap(instanceID int64, committeeSize int) map[string]struct{} {
+func (rc *RolacleSwitch) createEligibilityMap(instanceID uint32, committeeSize int) map[string]struct{} {
 	clients := []string{}
 	rc.mtx.Lock()
 	l := len(rc.clients)
@@ -123,7 +124,7 @@ func (rc *RolacleSwitch) createEligibilityMap(instanceID int64, committeeSize in
 
 	selected := make(map[string]struct{})
 
-	seed := rand.New(rand.NewSource(instanceID))
+	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for i := 0; i < committeeSize; i++ {
 		randclient := clients[seed.Int31n(int32(len(clients)))]
