@@ -23,6 +23,12 @@ func (ws *WorldSwitch) Get(id uint64) *RolacleSwitch {
 	if !ok {
 		log.Println("Creating world %d", id)
 		world = NewRolacleSwitch()
+		world.kill = func() {
+			ws.mtx.Lock()
+			delete(ws.worlds, id)
+			ws.mtx.Unlock()
+			log.Println("World removed : ", id)
+		}
 		ws.worlds[id] = world
 	}
 	ws.mtx.Unlock()
@@ -32,6 +38,8 @@ func (ws *WorldSwitch) Get(id uint64) *RolacleSwitch {
 type RolacleSwitch struct {
 	mtx     sync.Mutex
 	clients map[string]struct{}
+
+	kill func()
 
 	instLock  sync.Mutex
 	instances map[int64]map[string]struct{}
@@ -55,7 +63,11 @@ func (rc *RolacleSwitch) Register(pubkey string) {
 func (rc *RolacleSwitch) Unregister(pubkey string) {
 	rc.mtx.Lock()
 	delete(rc.clients, pubkey)
+	l := len(rc.clients)
 	rc.mtx.Unlock()
+	if l == 0 {
+		rc.kill()
+	}
 }
 
 func (rc *RolacleSwitch) Validate(instanceID int64, committeeSize int, proof string) bool {
@@ -100,8 +112,8 @@ func (rc *RolacleSwitch) createEligibilityMap(instanceID int64, committeeSize in
 	l := len(rc.clients)
 
 	if l < committeeSize {
-		rc.mtx.Unlock()
-		return nil
+		committeeSize = l
+		// todo different codepath that just picks all registered as eligible
 	}
 
 	for k := range rc.clients {
