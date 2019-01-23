@@ -1,5 +1,5 @@
 # oracle_server
-a non-variance mock oracle server 
+a no-variance mock oracle server 
 
 ## compile protobufs
 
