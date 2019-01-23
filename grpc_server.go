@@ -5,14 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	//"github.com/spacemeshos/go-spacemesh/api/pb"
-	"oracle_server/pb"
-	//"github.com/spacemeshos/go-spacemesh/common"
-	//"github.com/spacemeshos/go-spacemesh/log"
-	//"strconv"
-
 	"log"
 	"net"
+
+	"oracle_server/pb"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -95,7 +91,7 @@ func (s Server) startServiceInternal(status chan bool) {
 	// SubscribeOnNewConnections reflection service on gRPC server
 	reflection.Register(s.Server)
 
-	log.Println("grpc API listening on port %d", s.Port)
+	log.Println("grpc API listening on port ", s.Port)
 
 	if status != nil {
 		status <- true

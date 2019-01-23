@@ -12,8 +12,12 @@ LDFLAGS = -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.
 
 PKGS = $(shell go list ./...)
 
+proto:
+	sh ./scripts/genproto.sh
+.PHONY: proto
+
 build:
-	./pb/compile.sh
+	make proto
 	go build ${LDFLAGS} -o $(CURR_DIR)/$(BINARY)
 .PHONY: build
 

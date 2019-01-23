@@ -79,7 +79,7 @@ func (s JSONHTTPServer) startInternal(status chan bool) {
 
 	addr := ":" + strconv.Itoa(int(s.Port))
 
-	log.Println("json API listening on port %d", s.Port)
+	log.Println("json API listening on port ", s.Port)
 
 	go func() { s.listenStop() }()
 
