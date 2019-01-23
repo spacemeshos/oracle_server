@@ -1,0 +1,185 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "operationId": "Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbSimpleMessage"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbRegistration"
+            }
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    },
+    "/unregister": {
+      "post": {
+        "operationId": "Unregister",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbSimpleMessage"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbRegistration"
+            }
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    },
+    "/validate": {
+      "post": {
+        "operationId": "Validate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbValidRes"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbValidReq"
+            }
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    },
+    "/validatemap": {
+      "post": {
+        "operationId": "ValidateMap",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbValidList"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbValidReq"
+            }
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "pbRegistration": {
+      "type": "object",
+      "properties": {
+        "World": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ID": {
+          "type": "string"
+        }
+      }
+    },
+    "pbSimpleMessage": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "pbValidList": {
+      "type": "object",
+      "properties": {
+        "IDs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "pbValidReq": {
+      "type": "object",
+      "properties": {
+        "World": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "InstanceID": {
+          "type": "string",
+          "format": "int64"
+        },
+        "CommitteeSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "ID": {
+          "type": "string"
+        }
+      }
+    },
+    "pbValidRes": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    }
+  }
+}

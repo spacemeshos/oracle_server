@@ -1,0 +1,59 @@
+syntax = "proto3";
+package pb;
+
+import "google/api/annotations.proto";
+
+message SimpleMessage {
+    string value = 1;
+}
+
+message Registration {
+    uint64 World = 1;
+    string ID = 2;
+}
+
+message ValidReq {
+    uint64 World = 1;
+    int64 InstanceID = 2;
+    int32 CommitteeSize = 3;
+    string ID = 4;
+}
+
+message ValidList {
+    repeated string IDs = 1;
+}
+
+message ValidRes {
+    bool valid = 1;
+}
+
+
+service Service {
+    rpc Register(Registration) returns (SimpleMessage) {
+        option (google.api.http) = {
+          post: "/register"
+          body: "*"
+        };
+    }
+    rpc Unregister(Registration) returns (SimpleMessage) {
+        option (google.api.http) = {
+          post: "/unregister"
+          body: "*"
+        };
+    }
+
+    rpc ValidateMap(ValidReq) returns (ValidList) {
+        option (google.api.http) = {
+          post: "/validatemap"
+          body: "*"
+        };
+    }
+
+    rpc Validate(ValidReq) returns (ValidRes) {
+        option (google.api.http) = {
+          post: "/validate"
+          body: "*"
+        };
+    }
+}
+
