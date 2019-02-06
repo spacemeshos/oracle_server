@@ -25,38 +25,46 @@ type Server struct {
 // Register
 func (s Server) Register(ctx context.Context, in *pb.Registration) (*pb.SimpleMessage, error) {
 	log.Printf("registering %v in world %v \n", in.ID, in.World)
-	s.wSwitch.Get(in.World).Register(in.ID)
+	s.wSwitch.Register(in.World, in.Honest, in.ID)
 	return &pb.SimpleMessage{Value: "OK"}, nil
 }
 
 // Unregister
 func (s Server) Unregister(ctx context.Context, in *pb.Registration) (*pb.SimpleMessage, error) {
 	log.Printf("Unregistering %v in world %v \n", in.ID, in.World)
-	s.wSwitch.Get(in.World).Unregister(in.ID)
+	s.wSwitch.Unregister(in.World, in.Honest, in.ID)
 	return &pb.SimpleMessage{Value: "OK"}, nil
 }
 
-// Echo returns the response for an echo api request
+// Validate validates an id. DEPRECATED: use ValidateMap and get full map.
 func (s Server) Validate(ctx context.Context, in *pb.ValidReq) (*pb.ValidRes, error) {
 	log.Println("Got validate req")
 	fmt.Println("inst : ", in.InstanceID)
 	fmt.Println("committee ", in.CommitteeSize)
 	fmt.Println("proof ", in.ID)
 
-	v := &pb.ValidRes{Valid: s.wSwitch.Get(in.World).Validate(in.InstanceID, int(in.CommitteeSize), in.ID)}
+	v := &pb.ValidRes{Valid: s.wSwitch.Get(in.World).Eligible(in.InstanceID, int(in.CommitteeSize), in.ID, []byte{})}
 
 	return v, nil
 }
 
-// Echo returns the response for an echo api request
+// ValidateMap will return the full map
 func (s Server) ValidateMap(ctx context.Context, in *pb.ValidReq) (*pb.ValidList, error) {
 	log.Println("Got validate req")
 	fmt.Println("inst : ", in.InstanceID)
 	fmt.Println("committee ", in.CommitteeSize)
 
-	v := s.wSwitch.Get(in.World).ValidateMap(in.InstanceID, int(in.CommitteeSize))
+	v := s.wSwitch.Get(in.World).Export(in.InstanceID, int(in.CommitteeSize))
 
-	return v, nil
+	return MapToList(v), nil
+}
+
+func MapToList(elgmap map[string]struct{}) *pb.ValidList {
+	vl := &pb.ValidList{}
+	for k, _ := range elgmap {
+		vl.IDs = append(vl.IDs, k)
+	}
+	return vl
 }
 
 // StopService stops the grpc service.

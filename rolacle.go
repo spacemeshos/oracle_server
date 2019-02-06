@@ -1,142 +1,57 @@
 package main
 
 import (
+	"github.com/spacemeshos/go-spacemesh/eligibility"
 	"log"
-	"math/rand"
-	"oracle_server/pb"
 	"sync"
-	"time"
 )
 
 type WorldSwitch struct {
 	mtx    sync.Mutex
-	worlds map[uint64]*RolacleSwitch
+	worlds map[uint64]*eligibility.FixedRolacle
+
+	cntMtx        sync.Mutex
+	clientCounter map[uint64]int // world -> size
 }
 
 func NewWorldSwitch() *WorldSwitch {
-	return &WorldSwitch{worlds: make(map[uint64]*RolacleSwitch)}
+	return &WorldSwitch{worlds: make(map[uint64]*eligibility.FixedRolacle), clientCounter: make(map[uint64]int)}
 }
 
-func (ws *WorldSwitch) Get(id uint64) *RolacleSwitch {
-	var world *RolacleSwitch
+func (ws *WorldSwitch) Get(id uint64) *eligibility.FixedRolacle {
+	var world *eligibility.FixedRolacle
 	ws.mtx.Lock()
 	world, ok := ws.worlds[id]
 	if !ok {
 		log.Println("Creating world %d", id)
-		world = NewRolacleSwitch()
-		world.kill = func() {
-			ws.mtx.Lock()
-			delete(ws.worlds, id)
-			ws.mtx.Unlock()
-			log.Println("World removed : ", id)
-		}
+		world = eligibility.New()
 		ws.worlds[id] = world
 	}
 	ws.mtx.Unlock()
 	return world
 }
 
-type RolacleSwitch struct {
-	mtx     sync.Mutex
-	clients map[string]struct{}
-
-	kill func()
-
-	instLock  sync.Mutex
-	instances map[uint32]map[string]struct{}
+func (ws *WorldSwitch) Register(id uint64, isHonest bool, client string) {
+	ws.Get(id).Register(isHonest, client)
+	ws.cntMtx.Lock()
+	ws.clientCounter[id]++
+	ws.cntMtx.Unlock()
 }
 
-func NewRolacleSwitch() *RolacleSwitch {
-	return &RolacleSwitch{clients: make(map[string]struct{}), instances: make(map[uint32]map[string]struct{})}
-}
-
-func (rc *RolacleSwitch) Register(pubkey string) {
-	rc.mtx.Lock()
-	if _, exist := rc.clients[pubkey]; exist {
-		rc.mtx.Unlock()
-		return
-	}
-
-	rc.clients[pubkey] = struct{}{}
-	rc.mtx.Unlock()
-}
-
-func (rc *RolacleSwitch) Unregister(pubkey string) {
-	rc.mtx.Lock()
-	delete(rc.clients, pubkey)
-	l := len(rc.clients)
-	rc.mtx.Unlock()
-	if l == 0 {
-		rc.kill()
+func (ws *WorldSwitch) Unregister(id uint64, isHonest bool, client string) {
+	ws.Get(id).Register(isHonest, client)
+	ws.cntMtx.Lock()
+	ws.clientCounter[id]--
+	c := ws.clientCounter[id]
+	ws.cntMtx.Unlock()
+	if c <= 0 {
+		ws.remove(id) // todo : delete counter this ? the universe is infinite
 	}
 }
 
-func (rc *RolacleSwitch) Validate(instanceID uint32, committeeSize int, proof string) bool {
-	rc.instLock.Lock()
-	rolacle, ok := rc.instances[instanceID]
-	if !ok {
-		elmap := rc.createEligibilityMap(instanceID, committeeSize)
-		rc.instances[instanceID] = elmap
-		rc.instLock.Unlock()
-		return rc.Validate(instanceID, committeeSize, proof)
-	}
-	rc.instLock.Unlock()
-	_, valid := rolacle[proof]
-	return valid
-}
-
-func (rc *RolacleSwitch) ValidateMap(instanceID uint32, committeeSize int) *pb.ValidList {
-	rc.instLock.Lock()
-	rolacle, ok := rc.instances[instanceID]
-	if ok {
-		rc.instLock.Unlock()
-		return MapToList(rolacle)
-	}
-	elmap := rc.createEligibilityMap(instanceID, committeeSize)
-	rc.instances[instanceID] = elmap
-	rc.instLock.Unlock()
-	return MapToList(elmap)
-}
-
-func MapToList(elgmap map[string]struct{}) *pb.ValidList {
-	vl := &pb.ValidList{}
-	for k, _ := range elgmap {
-		vl.IDs = append(vl.IDs, k)
-	}
-	return vl
-}
-
-// USE ONLY FROM `Validate`
-func (rc *RolacleSwitch) createEligibilityMap(instanceID uint32, committeeSize int) map[string]struct{} {
-	clients := []string{}
-	rc.mtx.Lock()
-	l := len(rc.clients)
-
-	if l < committeeSize {
-		committeeSize = l
-		// todo different codepath that just picks all registered as eligible
-	}
-
-	for k := range rc.clients {
-		clients = append(clients, k)
-	}
-	rc.mtx.Unlock()
-
-	selected := make(map[string]struct{})
-
-	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	for i := 0; i < committeeSize; i++ {
-		randclient := clients[seed.Int31n(int32(len(clients)))]
-		// ensure uniqueness
-		_, ok := selected[randclient]
-		for ok {
-			randclient = clients[seed.Int31n(int32(len(clients)))]
-			_, ok = selected[randclient]
-		}
-
-		selected[randclient] = struct{}{}
-	}
-
-	return selected
+func (ws *WorldSwitch) remove(id uint64) {
+	ws.mtx.Lock()
+	delete(ws.worlds, id)
+	ws.mtx.Unlock()
+	log.Println("World removed : ", id)
 }

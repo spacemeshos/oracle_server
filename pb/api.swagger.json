@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "pb/api.proto",
+    "title": "api.proto",
     "version": "version not set"
   },
   "schemes": [
@@ -130,6 +130,10 @@
         },
         "ID": {
           "type": "string"
+        },
+        "Honest": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },

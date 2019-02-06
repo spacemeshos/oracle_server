@@ -10,6 +10,7 @@ message SimpleMessage {
 message Registration {
     uint64 World = 1;
     string ID = 2;
+    bool Honest = 3;
 }
 
 message ValidReq {
